@@ -8,7 +8,7 @@ key = os.urandom(16)
 print(key)
 encryption = AES.new(key, AES.MODE_CBC, 'This is an IV456')
 
-# padding du plain_text pour qu'il est une taille multiple de 16 byte
+# padding du plain_text pour qu'il ait une taille multiple de 16 byte
 plain_text = 'Antoine_le_bout'
 while(len(plain_text)%16 != 0):
     plain_text += "".ljust(1, "\x00")
