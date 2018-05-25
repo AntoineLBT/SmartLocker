@@ -342,14 +342,18 @@ class MFRC522:
       print ("Secteur "+str(blockAddr)+" "+str(backData))
       print("Traduction en ASCII : ", end='')
       c=0
+      array_contenue = ""
       while (c<16):
         if(backData[c]!=0) :
           try :
-            print (str(unichr(backData[c])),end="")
+            contenue = str(unichr(backData[c]))
+            array_contenue += contenue
+            print (contenue,end="")
           except :
             print(" Contenu Illisible")
         c+=1
       print("\n")
+    return array_contenue
   
   def MFRC522_Write(self, blockAddr, writeData):
     buff = []

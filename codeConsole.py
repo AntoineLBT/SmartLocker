@@ -31,7 +31,7 @@ continue_reading = True
 # Fonction qui arrete la lecture proprement 
 def end_read(signal,frame):
     global continue_reading
-    print ("Lecture terminée")
+    print ("Lecture terminee")
     continue_reading = False
     GPIO.cleanup()
 
@@ -48,7 +48,7 @@ while continue_reading:
     # Une carte est detectee
     if status == MIFAREReader.MI_OK:
         print ("Carte detectee")
-        lcd.message('Carte detectee')
+        
     
     # Recuperation UID
     (status,uid) = MIFAREReader.MFRC522_Anticoll()
@@ -66,7 +66,22 @@ while continue_reading:
         status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
 
         if status == MIFAREReader.MI_OK:
-            MIFAREReader.MFRC522_Read(8)
+            array_contenue = MIFAREReader.MFRC522_Read(8)
             MIFAREReader.MFRC522_StopCrypto1()
+            continue_reading=False
         else:
             print ("Erreur d\'Authentification")
+# on doit maintenant isoler le code contenu sur la carte
+code = array_contenue[-4:]
+print(code)
+lcd.message("Code :")
+input_user = raw_input("Entrez votre code :" )
+lcd.clear()
+if(code==input_user):
+    lcd.message("Success")
+    time.sleep(2)
+    lcd.clear()
+else:
+    lcd.message("Failed")
+    time.sleep(2)
+    lcd.clear()
