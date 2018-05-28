@@ -55,9 +55,9 @@ def decryption(cipher_text):
 # padding du plain_text pour qu'il ait une taille multiple de 16 byte
 
 def padding(array_contenue):
-    while(len(plain_text)%16 != 0):
-        plain_text += "".ljust(1, "\x00")
-    cipher_text = encryption.encrypt(plain_text)
+    while(len(array_contenue)%16 != 0):
+        array_contenue += "".ljust(1, "\x00")
+    cipher_text = encryption.encrypt(array_contenue)
     return cipher_text
 
 # Fonction qui arrete la lecture proprement 
@@ -105,18 +105,5 @@ while continue_reading:
         else:
             print ("Erreur d\'Authentification")
 # on doit maintenant isoler le code contenu sur la carte
-'''code = array_contenue[-4:]
-print(code)
-lcd.message("Code :")
-input_user = raw_input("Entrez votre code :" )
-lcd.clear()
-if(code==input_user):
-    lcd.message("Success")
-    time.sleep(2)
-    lcd.clear()
-else:
-    lcd.message("Failed")
-    time.sleep(2)
-    lcd.clear()'''
 cipher_text = padding(array_contenue)
-print(decryption(cipher_text)
+print(decryption(cipher_text))
