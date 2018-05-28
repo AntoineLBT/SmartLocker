@@ -2,9 +2,13 @@
 import RPi.GPIO as GPIO
 import MFRC522
 import signal
-
 import time
 import Adafruit_CharLCD as LCD
+
+from Crypto.Cipher import AES
+import os
+import struct
+import sys
 
 # configuration de l'ecran
 
@@ -28,6 +32,34 @@ lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7,
 
 continue_reading = True
 
+# Fonction de decryption
+
+def decryption(cipher_text):
+# decryption
+    key_file = open("base_key.key", "r")
+    key = key_file.read()
+    decryption = AES.new(key[:32], AES.MODE_CBC, 'This is an IV456')
+    decrypt_text = decryption.decrypt(cipher_text)
+    print(decrypt_text)
+# j'enleve le padding
+    i = 0
+    for c in decrypt_text:
+        if(c=='\''):
+            number = i
+            break
+        i += 1
+    plain_text=decrypt_text[0:i].decode("utf-8")
+    print(plain_text)
+    return plain_text
+
+# padding du plain_text pour qu'il ait une taille multiple de 16 byte
+
+def padding(array_contenue):
+    while(len(plain_text)%16 != 0):
+        plain_text += "".ljust(1, "\x00")
+    cipher_text = encryption.encrypt(plain_text)
+    return cipher_text
+
 # Fonction qui arrete la lecture proprement 
 def end_read(signal,frame):
     global continue_reading
@@ -39,6 +71,7 @@ signal.signal(signal.SIGINT, end_read)
 MIFAREReader = MFRC522.MFRC522()
 
 print ("Passer le tag RFID a lire")
+array_contenue = ""
 
 while continue_reading:
     
@@ -72,7 +105,7 @@ while continue_reading:
         else:
             print ("Erreur d\'Authentification")
 # on doit maintenant isoler le code contenu sur la carte
-code = array_contenue[-4:]
+'''code = array_contenue[-4:]
 print(code)
 lcd.message("Code :")
 input_user = raw_input("Entrez votre code :" )
@@ -84,4 +117,6 @@ if(code==input_user):
 else:
     lcd.message("Failed")
     time.sleep(2)
-    lcd.clear()
+    lcd.clear()'''
+cipher_text = padding(array_contenue)
+print(decryption(cipher_text)
