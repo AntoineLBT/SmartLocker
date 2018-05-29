@@ -48,17 +48,20 @@ def decryption(cipher_text):
             number = i
             break
         i += 1
-    plain_text=decrypt_text[0:i].decode("utf-8")
+    plain_text=decrypt_text[0:i].decode('utf-8')
     print(plain_text)
     return plain_text
 
 # padding du plain_text pour qu'il ait une taille multiple de 16 byte
 
 def padding(array_contenue):
-    while(len(array_contenue)%16 != 0):
-        array_contenue += "".ljust(1, "\x00")
-    cipher_text = encryption.encrypt(array_contenue)
-    return cipher_text
+    print(array_contenue)
+    convert = ''
+    for dec in array_contenue:
+        convert += chr(dec) 
+    while(len(convert)%16 != 0):
+        convert += "".ljust(1, "\x00")
+    return convert
 
 # Fonction qui arrete la lecture proprement 
 def end_read(signal,frame):
@@ -106,4 +109,4 @@ while continue_reading:
             print ("Erreur d\'Authentification")
 # on doit maintenant isoler le code contenu sur la carte
 cipher_text = padding(array_contenue)
-print(decryption(cipher_text))
+decryption(cipher_text)

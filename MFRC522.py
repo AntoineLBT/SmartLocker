@@ -353,7 +353,7 @@ class MFRC522:
             print(" Contenu Illisible")
         c+=1
       print("\n")
-    return array_contenue
+    return backData
   
   def MFRC522_Write(self, blockAddr, writeData):
     buff = []

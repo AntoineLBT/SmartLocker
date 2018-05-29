@@ -5,6 +5,7 @@
 import RPi.GPIO as GPIO
 import MFRC522
 import signal
+from encryption import encryption, decryption
 
 continue_reading = True
 
@@ -19,12 +20,17 @@ signal.signal(signal.SIGINT, end_read)
 MIFAREReader = MFRC522.MFRC522()
 
 data = []
-texte = raw_input("Entrez une chaine de caractère :\n")
+texte = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+while(len(texte) > 16):
+    texte = raw_input("Entrez une chaine de 16 caractère max:\n")
+print("texte :", texte)
+texte = encryption(texte)
 for c in texte:
     if (len(data)<16):
         data.append(int(ord(c)))
 while(len(data)!=16):
     data.append(0)
+print(data)
 print ("Placez votre carte RFID")
 
 while continue_reading:
