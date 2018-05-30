@@ -7,6 +7,7 @@ import MFRC522
 import signal
 from encryption import encryption, decryption
 
+import sqlite3
 continue_reading = True
 
 # Fonction qui arrete la lecture proprement 
@@ -16,16 +17,40 @@ def end_read(signal,frame):
     continue_reading = False
     GPIO.cleanup()
 
+def connect_db():
+    connection = sqlite3.connect('../RFID/db.db')
+    cursor = connection.cursor() 
+    return connection, cursor
+
 signal.signal(signal.SIGINT, end_read)
 MIFAREReader = MFRC522.MFRC522()
 
 data = []
+# creation dun profile dans la db
+connect, cursor = connect_db()
 texte = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-while(len(texte) > 16):
-    texte = raw_input("Entrez une chaine de 16 caractère max:\n")
-print("texte :", texte)
-texte = encryption(texte)
-for c in texte:
+mdp = ''
+while(len(texte) > 8):
+    texte = raw_input("Entrez le nom ou initiale de 8 caractère max:\n")
+while(len(mdp)!=4):
+    mdp = raw_input("Entrez un code pin de 4 caractère maximum:\n")
+user_data = texte+mdp
+cursor.execute("INSERT INTO User (Name, Password) VALUES (?, ?)",(texte, mdp,))
+connect.commit()
+cursor.execute("SELECT ID FROM User WHERE Name=?", (texte,))
+id = cursor.fetchone()[0]
+if id < 10:
+    data_to_card = "000" + str(id) + user_data
+elif id < 100:
+    data_to_card = "00" + str(id) + user_data
+elif id < 1000: 
+    data_to_card = "0" + str(id) + user_data
+else:
+    data_to_card = str(id) + user_data
+
+print("data_to_card :", data_to_card)
+data_to_card = encryption(data_to_card)
+for c in data_to_card:
     if (len(data)<16):
         data.append(int(ord(c)))
 while(len(data)!=16):

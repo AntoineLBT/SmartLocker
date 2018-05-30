@@ -22,7 +22,6 @@ def decryption(cipher_text):
     key = key_file.read()
     decryption = AES.new(key[:32], AES.MODE_CBC, 'This is an IV456')
     decrypt_text = decryption.decrypt(cipher_text)
-    print(decrypt_text)
 # j'enleve le padding
     i = 0
     for c in decrypt_text:
@@ -31,5 +30,4 @@ def decryption(cipher_text):
             break
         i += 1
     plain_text=decrypt_text[0:i].decode("utf-8")
-    print(plain_text)
     return plain_text
