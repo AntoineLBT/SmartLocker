@@ -35,7 +35,7 @@ while(len(texte) > 8):
 while(len(mdp)!=4):
     mdp = raw_input("Entrez un code pin de 4 caractère maximum:\n")
 user_data = texte+mdp
-cursor.execute("INSERT INTO User (Name, Password) VALUES (?, ?)",(texte, mdp,))
+cursor.execute("INSERT INTO User (Name, Password, State) VALUES (?, ?, 'User')",(texte, mdp,))
 connect.commit()
 cursor.execute("SELECT ID FROM User WHERE Name=?", (texte,))
 id = cursor.fetchone()[0]

@@ -68,27 +68,8 @@ KEYPAD = [
         ["4","5","6"],
         ["7","8","9"],
         ["*","0","#"]
-]
+] 
 
-# fonction registre 
-def clean_register(nombre_pin):
-    for i in range(0, nombre_pin):
-        registre[0] = 0
-
-def setup_register(index, value):
-    registre[index] = value
-
-def write_register(nombre_pin):
-    GPIO.output(3, GPIO.LOW)
-    for i in range(0, nombre_pin):
-        GPIO.output(4, GPIO.LOW)
-        val = registre[i]
-        if val == 1:
-            GPIO.output(2, GPIO.HIGH)
-        else:
-            GPIO.output(2, GPIO.LOW)
-        GPIO.output(4, GPIO.HIGH)
-    GPIO.output(3, GPIO.HIGH)
 
 # same as calling: factory.create_4_by_4_keypad, still we put here fyi:
 ROW_PINS = [5, 6, 13, 19] # BCM numbering
@@ -120,22 +101,19 @@ lcd_rows    = 2
 lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7,
                            lcd_columns, lcd_rows, lcd_backlight)
 
-# configuration registre
-
-nombre_pin = 8
-SER_Pin = 2
-RCLK_Pin = 3
-SRCLK_Pin = 4
-GPIO.setup(SER_Pin, GPIO.OUT)
-GPIO.setup(RCLK_Pin, GPIO.OUT)
-GPIO.setup(SRCLK_Pin, GPIO.OUT)
+# configuration mosfet
+Casier_1 = 2
+Casier_2 = 3
+tab_Casier = [Casier_1, Casier_2]
+GPIO.setup(Casier_1, GPIO.OUT)
+GPIO.setup(Casier_2, GPIO.OUT)
 
 while(True):
     
     mdp_input = ""
-    registre = [0, 0, 0, 0, 0, 0, 0, 0]
     
-    clean_register(nombre_pin)
+    GPIO.output(Casier_1, GPIO.LOW)
+    GPIO.output(Casier_2, GPIO.LOW)
     
     signal.signal(signal.SIGINT, end_read)
     MIFAREReader = MFRC522.MFRC522()
@@ -185,13 +163,13 @@ while(True):
         else:
             i+=1
     password = plain_text[i+4:i+8]
-    password = int(password)
 
     # on va chercher le mdp de la carte dans la base de donee
     connection, cursor = connect_db()
-    cursor.execute("SELECT Password FROM User WHERE ID = ?", (id,))
-    password_db = cursor.fetchone()[0]
-
+    cursor.execute("SELECT Password, State FROM User WHERE ID = ?", (id,))
+    data_user = cursor.fetchall()
+    password_db = data_user[0][0]
+    State = data_user[0][1]
     # on demande a l'utilisateur de rentrer son mdp et on compare les deux
     lcd.clear()
     lcd.message("Code :")
@@ -212,16 +190,23 @@ while(True):
             lcd.message("Code : ****")
             time.sleep(1)
     lcd.clear()
-    access = "Empty"
-    if int(mdp_input)==password:
+    access = "Null"
+
+    if mdp_input==password and password==password_db:
+        print(State, type(State))
         lcd.message("Sucess")
-        access = "Full"
+        if State=="User":
+            access = "Full"
+        if State==("Admin"):   
+            access="Empty"
     else:
         lcd.message("Fail")
     time.sleep(2)
     lcd.clear()
 
-    # on cherche quelle casier ouvrir selon leurs contenue
+    # on cherche quelle casier ouvrir selon leurs contenue et si c'est un utilisateur ou admin
+    
+    # user
     if access=="Full":
         cursor.execute("SELECT Number FROM Locker WHERE State = ?", (access,))
         number = cursor.fetchone()
@@ -233,13 +218,32 @@ while(True):
             message = "Casier "+str(number[0])+" ouvert"
             lcd.clear()
             lcd.message(message)
-            setup_register(number[0]-1, 1)
-            #registre = [1, 1, 1, 1, 1, 1, 1, 1]
-            print(registre)
-            write_register(nombre_pin)
+            if number[0]==1:
+                GPIO.output(Casier_1, GPIO.HIGH)
+            if number[0]==2:
+                GPIO.output(Casier_2, GPIO.HIGH)
             time.sleep(3)
             cursor.execute("UPDATE Locker SET State = 'Empty' WHERE Number = ?", (number[0],))
         connection.commit()
         connection.close()
+    # admin
+    elif access=="Empty":
+        lcd.clear()
+        lcd.message("Mode Admin")
+        time.sleep(1)
+        cursor.execute("SELECT Number FROM Locker WHERE State = ?", (access,))
+        number = cursor.fetchall()
+        for casier_vide in number:
+            GPIO.output(tab_Casier[casier_vide[0]-1], GPIO.HIGH)
+        time.sleep(3)
+        cursor.execute("UPDATE Locker SET State = 'Full'")
+        lcd.clear()
+        lcd.message("Casier remplis")
+        time.sleep(2)
+        connection.commit()
+    else:
+        lcd.clear()
+        lcd.message("Erreur reessayez")
+        time.sleep(3)
     lcd.clear()
     MIFAREReader.MFRC522_Reset()
